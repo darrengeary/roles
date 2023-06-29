@@ -39,6 +39,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
   const [activeTab, setActiveTab] = useState("standard")
   const [startView, setStartView] = useState()
   const [endView, setEndView] = useState()
+  const [inlineView, setInlineView] = useState(true)
   const [week, setWeek] = useState(0)
   const [editView, setEditView] = useState(false)
   const [editShift, setEditShift] = useState({})
@@ -61,12 +62,16 @@ export default function AdminShiftsScreen({ staff, shifts }) {
     days.push(currentDay.clone())
     currentDay = currentDay.clone().add(1, "day")
   }
-  const weekDays = days.map((day) => {
+  const weekDays = days.map((day, dayIndex) => {
     return {
       header: moment(day).format("ddd DD"),
       dateString: moment(day),
+      dayIndex,
     }
   })
+
+  const totalHours = Array(weekDays.length).fill(0)
+
   const handleNext = () => {
     setWeek(week + 1)
   }
@@ -104,6 +109,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
       toast.error(getError(err))
     }
   }
+
   //delete async function awaits deletion and dispatches delete_success
   //if error then it will not proceed and catches err
   const deleteHandler = async (shiftId) => {
@@ -115,6 +121,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
       toast.error(getError(err))
     }
   }
+
   const handleItemResize = (itemId, time, edge) => {
     const itemIndex = shifts.findIndex((item) => item.id === itemId)
     let updatedItem = { ...shifts[itemIndex] }
@@ -133,6 +140,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
       ],
     })
   }
+
   const itemRenderer = ({
     item,
     timelineContext,
@@ -193,6 +201,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
       </div>
     )
   }
+
   const handleTimeChange = (
     visibleTimeStart,
     visibleTimeEnd,
@@ -200,6 +209,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
   ) => {
     updateScrollCanvas(visibleTimeStart, visibleTimeEnd)
   }
+
   const handleItemMove = (itemId, dragTime, newGroupOrder) => {
     const itemIndex = shifts.findIndex((item) => item.id === itemId)
     const dragEndTime = dragTime - moment(shifts[itemIndex].start_time)
@@ -327,7 +337,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
     <>
       <Layout title='Admin Shifts'>
         <div>
-          <div className='flex justify-between'>
+          <div className='flex  justify-between'>
             <h1 className='mb-4 text-xl'>Shifts</h1>
 
             <button onClick={createHandler} className='primary-button'></button>
@@ -346,8 +356,8 @@ export default function AdminShiftsScreen({ staff, shifts }) {
             </div>
           ) : (
             <>
-              <div>
-                <div className='tab-container'>
+              <div className='mb-24'>
+                <div className='tab-container '>
                   <div
                     className={`tab ${
                       activeTab === "standard" ? "active" : ""
@@ -475,6 +485,9 @@ export default function AdminShiftsScreen({ staff, shifts }) {
                       )}
                       <button onClick={handlePrev}>Previous</button>
                       <button onClick={handleNext}>Next</button>
+                      <button onClick={() => setInlineView(!inlineView)}>
+                        toggle-view
+                      </button>
                       <table className='standard-table'>
                         <thead className='grey-cell'>
                           <tr className='head'>
@@ -490,7 +503,7 @@ export default function AdminShiftsScreen({ staff, shifts }) {
                               <td className='grey-cell staff-col'>
                                 {employee.title}
                               </td>
-                              {weekDays.map((day) => {
+                              {weekDays.map((day, dayIndex) => {
                                 const column = moment(day.dateString).format(
                                   "DD MM YYYY"
                                 )
@@ -507,16 +520,43 @@ export default function AdminShiftsScreen({ staff, shifts }) {
                                         onClick={() =>
                                           editInit(s, employee.title)
                                         }
-                                        className='text-center shift-active'
+                                        className='shift-active'
                                         key={s.id}
                                       >
-                                        {moment(s.start).format("HH:mm") +
-                                          " - " +
-                                          moment(s.end).format("HH:mm")}
+                                        <div
+                                          className={
+                                            inlineView
+                                              ? "flex text-center mx-auto"
+                                              : "text-center mx-auto"
+                                          }
+                                        >
+                                          <div
+                                            className={
+                                              inlineView
+                                                ? "flex mx-auto"
+                                                : "text-center mx-auto"
+                                            }
+                                          >
+                                            {moment(s.start).format("h:mmA")}
+                                            <div
+                                              className={
+                                                inlineView ? "" : "dash"
+                                              }
+                                            >
+                                              &nbsp;&nbsp;-&nbsp;&nbsp;
+                                            </div>
+                                            {moment(s.end).format("h:mmA")}
+                                          </div>
+                                        </div>
                                       </td>
+                                    )
+                                    totalHours[dayIndex] += moment(s.end).diff(
+                                      moment(s.start),
+                                      "minutes"
                                     )
                                   }
                                 })
+
                                 return (
                                   shift || (
                                     <td
@@ -530,6 +570,28 @@ export default function AdminShiftsScreen({ staff, shifts }) {
                               })}
                             </tr>
                           ))}
+                          <tr className='hours'>
+                            <td className='grey-cell staff-col'>Total Hours</td>
+                            {totalHours.map((total, dayIndex) => (
+                              <td className='grey-cell' key={dayIndex}>
+                                <div className='sm:flex'>
+                                  <div className='sm:flex  mx-auto'>
+                                    <div>
+                                      {moment
+                                        .utc(total * 60 * 1000)
+                                        .format("h") + "hrs "}
+                                      &nbsp;
+                                    </div>
+                                    <div>
+                                      {moment
+                                        .utc(total * 60 * 1000)
+                                        .format("mm") + "m"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
                         </tbody>
                       </table>
                     </div>
@@ -571,38 +633,6 @@ export default function AdminShiftsScreen({ staff, shifts }) {
                     <></>
                   )}
                 </div>
-              </div>
-              <div className='overflow-x-auto'>
-                <table className='min-w-full'>
-                  <thead className='border-b'>
-                    <tr>
-                      <th className='px-5 text-left'>ID</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {shifts.map((shift) => (
-                      <tr key={shift._id} className='border-b'>
-                        <td className=' p-5 '>{shift.id.substring(20, 24)}</td>
-
-                        <td className=' p-5 '>
-                          <Link href={`/admin/shift/${shift.id}`}>
-                            <a type='button' className='default-button'>
-                              Edit
-                            </a>
-                          </Link>
-                          &nbsp;
-                          <button
-                            onClick={() => deleteHandler(shift.id)}
-                            className='default-button'
-                            type='button'
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </>
           )}

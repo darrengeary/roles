@@ -222,8 +222,8 @@ nav {
 .calendar {
   height: 1000px;
 }
+
 .rota-container {
-  overflow-x: auto;
   display: flex;
   flex-direction: column;
 }
@@ -408,7 +408,6 @@ footer {
 }
 .right-content {
   overflow-y: scroll !important;
-  overflow-x: hidden;
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -451,28 +450,49 @@ footer {
   color: black;
   height: fit-content;
 }
+
 .standard-table {
   width: 100%;
-  font-size: 0.8rem;
+  margin-right: 20px;
+  font-size: 12px;
 }
+
 .standard-table th {
   width: calc(100% / 8);
   border: 1px solid #1e1e2e;
 }
 
 .standard-table tr {
-  height: 60px;
+  height: 50px;
 }
 
 .standard-table td {
   border: 4px solid #1e1e2e;
-  text-align: center;
   cursor: pointer;
+  font-weight: 600;
 }
+
+.hours {
+  height: 30px !important;
+  text-align: center !important;
+  padding-left: 0 !important;
+}
+
+@media screen and (max-width: 768px) {
+  .standard-table td {
+    text-align: center;
+    padding-left: 0;
+  }
+}
+
 .standard-table td:hover {
   background-color: #1d8cf8;
 }
 
+.dash {
+  margin-top: -5px;
+  margin-bottom: -5px;
+}
 .staff-col {
   padding-left: 1%;
   text-align: left !important;
